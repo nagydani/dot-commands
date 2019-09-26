@@ -1,5 +1,11 @@
 ; CP command from esxDOS v0.8.7
 
+; Errata:
+; 1. Only the first argument is copied to the last, no check against more than 2 args
+; 2. Arguments buffer overflow
+; 3. No sanitization of file names (maybe esxDOS system calls do it)
+; 4. Very sloppy end-of-loop condition
+
 	include	"sysvars.asm"
 	include	"hooks.asm"
 	include	"empty-usage.asm"
