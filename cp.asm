@@ -1,17 +1,43 @@
-; CP command from esxDOS v0.8.7
+; CP command for esxDOS
 
 ; Errata:
-; 1. Only the first argument is copied to the last, no check against more than 2 args
-; 2. Arguments buffer overflow
-; 3. No sanitization of file names (maybe esxDOS system calls do it)
+; 1. No sanitization of file names (maybe esxDOS system calls do it)
 
 	include	"sysvars.asm"
 	include	"hooks.asm"
 	include	"empty-usage.asm"
 
-arg_e:	equ 2200h
+arg_e:	equ 2400h
 
-execute:call parsefn
+execute:ld de,f_name
+parsel:	ld a,(hl)
+	and a
+	jr z,parsee
+	cp ":"
+	jr z,parsee
+	cp 00dh
+	jr z,parsee
+	cp " "
+	jr z,parse2
+	ldi
+	ld a,d
+	cp arg_e / 100h
+	jr c,parsel		; guard against buffer overflow
+	jr usage
+
+parse2:	xor a
+	ld (de),a
+	ld a,(f_name2 + 1)
+	or a
+	jr nz,usage		; guard against more than two arguments
+	inc hl
+	inc de
+	ld (f_name2),de
+	jr parsel
+
+parsee:	xor a
+	ld (de),a
+
 	ld hl,(f_name2)
 	ld a,l
 	or h
@@ -87,30 +113,6 @@ f_close:rst 8
 
 	include	"strcpy.asm"
 
-parsefn:ld de,f_name
-parsel:	ld a,(hl)
-	and a
-	jr z,parsee
-	cp ":"
-	jr z,parsee
-	cp 00dh
-	jr z,parsee
-	cp " "
-	jr z,parse2
-	ldi
-	jr parsel
-
-parsee:	xor a
-	ld (de),a
-	ret
-
-parse2:	xor a
-	ld (de),a
-	inc hl
-	inc de
-	ld (f_name2),de
-	jr parsel
-
 	include	"basename.asm"
 	include	"chkdir.asm"
 	include	"puts.asm"
@@ -120,4 +122,4 @@ usaget:	defb "Usage: cp source target", 0dh, 00h
 f_name2:defw 0
 fd_src:	defb 0
 fd_trg:	defw 0
-f_name:	defs arg_e - $
+f_name:	include "align512.asm"
