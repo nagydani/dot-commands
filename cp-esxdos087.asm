@@ -5,9 +5,9 @@
 ; 2. Arguments buffer overflow
 ; 3. No sanitization of file names (maybe esxDOS system calls do it)
 
-	include	"sysvars.asm"
-	include	"hooks.asm"
-	include	"empty-usage.asm"
+	include	"lib/sysvars.asm"
+	include	"lib/hooks.asm"
+	include	"lib/empty-usage.asm"
 
 arg_e:	equ 2200h
 
@@ -85,7 +85,7 @@ f_close:rst 8
 	defb fclose
 	ret
 
-	include	"strcpy.asm"
+	include	"lib/strcpy.asm"
 
 parsefn:ld de,f_name
 parsel:	ld a,(hl)
@@ -111,10 +111,10 @@ parse2:	xor a
 	ld (f_name2),de
 	jr parsel
 
-	include	"basename.asm"
-	include	"chkdir.asm"
-	include	"puts.asm"
-	include	"buffer.asm"
+	include	"lib/basename.asm"
+	include	"lib/chkdir.asm"
+	include	"lib/puts.asm"
+	include	"lib/buffer.asm"
 
 usaget:	defb "Usage: cp source target", 0dh, 00h
 f_name2:defw 0

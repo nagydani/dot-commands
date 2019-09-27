@@ -3,15 +3,15 @@
 ; Errata:
 ; 1. No sanitization of file names (maybe esxDOS system calls do it)
 
-	include	"sysvars.asm"
-	include	"hooks.asm"
-	include	"empty-usage.asm"
+	include	"lib/sysvars.asm"
+	include	"lib/hooks.asm"
+	include	"lib/empty-usage.asm"
 
 arg_e:	equ 2400h
 
 execute:ld de,f_name
 parsel:	ld a,(hl)
-	and a
+	or a
 	jr z,parsee
 	cp ":"
 	jr z,parsee
@@ -111,15 +111,14 @@ f_close:rst 8
 	defb fclose
 	ret
 
-	include	"strcpy.asm"
-
-	include	"basename.asm"
-	include	"chkdir.asm"
-	include	"puts.asm"
-	include	"buffer.asm"
+	include	"lib/strcpy.asm"
+	include	"lib/basename.asm"
+	include	"lib/chkdir.asm"
+	include	"lib/puts.asm"
+	include	"lib/buffer.asm"
 
 usaget:	defb "Usage: cp source target", 0dh, 00h
 f_name2:defw 0
 fd_src:	defb 0
 fd_trg:	defw 0
-f_name:	include "align512.asm"
+f_name:	include "lib/align512.asm"
