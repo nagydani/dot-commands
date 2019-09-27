@@ -1,7 +1,8 @@
 ; Read decimal argument
 ; In: HL = pointer to argument
 ; Out: CF set on error, ZF set if last arg, DE = numeric argument
-decarg:	call digit
+numarg:	ld a,(hl)
+	call digit
 	ret c
 	call atoi
 	ret c
@@ -15,10 +16,4 @@ decarg:	call digit
 	or a
 	ret z
 	scf
-	ret
-
-nxarg:	inc hl
-	cp (hl)
-	jr z,nxarg
-	or a
 	ret

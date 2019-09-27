@@ -25,3 +25,5 @@ atoil:	ld a,(hl)
 	ex de,hl
 	inc hl
 	jr atoil
+
+	include	"lib/digit.asm"
