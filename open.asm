@@ -140,11 +140,11 @@ fin:	call chinfo
 	ld ix,membot
 	rst 8
 	defb fread
+	dec c
 	ld a,(membot)
-	ccf
-	ret c
-	xor a
-	inc a
+	scf
+	ret z
+	or c
 	ret
 fout:	ld (membot),a
 	call chinfo
