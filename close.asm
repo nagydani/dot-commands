@@ -23,9 +23,13 @@ nohash:	call numarg
 	ld ix,(curchl)
 	ld a,(ix+4)
 	cp "F"
-	ld a,bad_fd_err
-	scf
-	ret nz
+	jr z,doclose
+	pop hl
+	rst 18h
+	defw close0a
+	and a
+	ret
+
 doclose:ld a,(ix+5)
 	rst 8
 	defb fclose
