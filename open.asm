@@ -18,22 +18,7 @@ nohash:	call numarg
 	ld (s_num),a
 	ld de,f_name
 	call strarg
-	jr z,usage
-	ld (m_add),de
-	call strarg
 	jr nz,usage
-m_add:	equ $ + 1
-	ld hl,0000h
-	ld a,(hl)
-	and 0dfh
-	cp "R"
-	jr z,do_r
-	cp "W"
-	jr nz,usage
-do_w:	ld a,fopen_w
-	jr do_fop
-do_r:	ld a,fopen_r
-do_fop:	ld (open_m),a
 
 	ld hl,serv
 	ld de,chinfo
@@ -69,8 +54,7 @@ setserv:ld hl,(chans)
 	dec de
 	lddr
 
-open_m:	equ $ + 1
-doopen:	ld b,0
+doopen:	ld b,09h
 	ld a,"*"
 	ld hl,f_name
 	rst 8
@@ -158,7 +142,7 @@ fout:	ld (membot),a
 serv_l:	equ $ - chinfo
 	org serv + serv_l
 
-usaget:	defb "Usage: open [#]stream file_name {r|w}", 0dh, 00h
+usaget:	defb "Usage: open [#]stream filename", 0dh, 00h
 fch:	defw fout
 	defw fin
 	defb "F"
