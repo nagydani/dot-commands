@@ -8,30 +8,11 @@
 	include	"lib/sysvars.asm"
 	include	"lib/hooks.asm"
 	include	"lib/empty-usage.asm"
+	include "lib/cpmv-esxdos087.asm"
 
 arg_e:	equ 2200h
 
-execute:call parsefn
-	ld hl,(f_name2)
-	ld a,l
-	or h
-	jr z,usage		; missing target
-
-	ld hl,f_name
-	ld a,(hl)
-	and a
-	jr z,usage		; missing source
-
-	ld hl,(f_name2)		; if target is
-	call chkdir		; not a directory
-	jr nz,docopy		; then jump forward
-	push hl			; otherwise save terminator
-	ld hl,f_name		; take the source
-	call basename		; file base name
-	pop de			; restore terminator in DE
-	call strcpy		; append to target path
-
-docopy:	ld hl,f_name
+do:	ld hl,f_name
 	ld a,"*"
 	ld b,fopen_r
 	rst 8
@@ -40,7 +21,7 @@ docopy:	ld hl,f_name
 	ld (fd_src),a
 	ld hl,(f_name2)
 	ld a,"*"
-	ld b,fopen_w
+	ld b,fopen_we
 	rst 8
 	defb fopen
 	jr c,exit
@@ -86,31 +67,7 @@ f_close:rst 8
 	ret
 
 	include	"lib/strcpy.asm"
-
-parsefn:ld de,f_name
-parsel:	ld a,(hl)
-	and a
-	jr z,parsee
-	cp ":"
-	jr z,parsee
-	cp 00dh
-	jr z,parsee
-	cp " "
-	jr z,parse2
-	ldi
-	jr parsel
-
-parsee:	xor a
-	ld (de),a
-	ret
-
-parse2:	xor a
-	ld (de),a
-	inc hl
-	inc de
-	ld (f_name2),de
-	jr parsel
-
+	include "lib/parse2-esxdos087.asm"
 	include	"lib/basename.asm"
 	include	"lib/chkdir.asm"
 	include	"lib/puts.asm"
