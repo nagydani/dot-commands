@@ -13,7 +13,10 @@ close0a:	equ 16e8h
 close0:		equ 16ebh
 str_data0:	equ 1721h
 report_o_2:	equ 1725h
+reclaim1:	equ 19e5h
 reclaim2:	equ 19e8h
+break_key:	equ 1f54h
+caps_shift:	equ 1f5ah
 numeric:	equ 2d1bh
 stack_bc:	equ 2d2bh
 print_fp:	equ 2de3h

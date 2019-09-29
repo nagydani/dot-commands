@@ -11,7 +11,7 @@ execute:ld de,f_name
 	call strarg
 	jr nz,usage
 
-	rst 18h
+teloop:	rst 18h
 	defw set_work
 	ld hl,flagx
 	res 6,(hl)
@@ -22,6 +22,8 @@ execute:ld de,f_name
 	defw 0030h
 	ld (hl),0dh
 	ld (k_cur),hl
+	ld hl,0
+	ld (e_num),hl
 
 	ld a,"*"
 	ld b,fopen_r
@@ -32,6 +34,8 @@ execute:ld de,f_name
 	ld de,0001h
 	jr c,redraw
 	ld (fd),a
+	ld hl,newfile
+	ld (hl),e		; file not new
 
 	ld hl,(d_num)
 	ld a,h
@@ -47,7 +51,14 @@ execute:ld de,f_name
 	ld (buffer),bc
 	pop de
 
-redraw:	set 4,(iy+tv_flag-err_nr)
+redraw:	ld a,0feh
+	push bc
+	push de
+	rst 18h
+	defw chan_open
+	pop de
+	pop bc
+	set 4,(iy+tv_flag-err_nr)
 	ld a,16h
 	rst 10h
 	xor a
@@ -85,6 +96,11 @@ donescr:res 4,(iy+tv_flag-err_nr)
 
 keyloop:rst 18h
 	defw wait_key
+	ex af,af'
+	rst 18h
+	defw break_key
+	ret nc
+	ex af,af'
 	cp 18h
 	jr nc,insert
 	cp 07h
@@ -94,14 +110,12 @@ keyloop:rst 18h
 	jr z,down
 	cp 0bh
 	jr z,up
+	cp 0ch
+	jr z,delete
 	cp 0dh
-	ret z
-	rst 18h
+	jp z,enter
+edkeys:	rst 18h
 	defw ed_keys
-	jr keyloop
-
-insert:	rst 18h
-	defw add_char
 	jr keyloop
 
 edit:	rst 18h
@@ -114,7 +128,17 @@ c_ptr:	equ $ + 1
 c_len:	equ $ + 1
 	ld bc,0000h
 	call println
+	ld (terminator),a
+	ld hl,(c_num)
+	ld (e_num),hl
 	jr redraw2
+
+moveup:	ld hl,(c_num)
+	dec hl
+	ld a,h
+	or l
+	jr z,keyloop
+	jr vert
 
 up:	ld hl,(k_cur)
 	ld de,(worksp)
@@ -124,12 +148,9 @@ up:	ld hl,(k_cur)
 	ld (k_cur),de
 	jr keyloop
 
-moveup:	ld hl,(c_num)
-	dec hl
-	ld a,h
-	or l
-	jr z,keyloop
-	jr vert
+insert:	rst 18h
+	defw add_char
+	jr keyloop
 
 down:	ld hl,(k_cur)
 	ld a,0dh
@@ -145,18 +166,139 @@ movedown:
 	ld hl,(c_num)
 	inc hl
 vert:	ld (c_num),hl
-redraw2:ld a,2
-	rst 18h
-	defw chan_open
-	ld de,(d_num)
+redraw2:ld de,(d_num)
 buffer: equ $ + 1
 	ld bc,0000h
 	jp redraw
 
+delete:	bit 1,(iy+mode-err_nr)
+	jr z,edkeys
+	rst 18h
+	defw caps_shift
+	ld hl,(k_cur)
+	jr nc,backdel
+	ld e,l
+	ld d,h
+	ld bc,0
+	ld a,0dh
+	cpir
+	dec hl
+	jr fwdel
+
+backdel:ld de,(worksp)
+fwdel:	rst 18h
+	defw reclaim1
+	ld (k_cur),hl
+	jp keyloop
+
+enter:	bit 1,(iy+mode-err_nr)
+	jr z,enter2
+	ld a,0dh
+	rst 18h
+	defw add_char
+enter2:	ld hl,tmpname
+	ld a,"*"
+	ld b,fopen_w
+	rst 8
+	defb fopen
+	ret c
+	ld (ofd),a
+
+	ld a,(fd)
+	ld bc,0
+	ld e,c
+	ld d,c
+	ld l,c
+	rst 8
+	defw fseek
+	ld hl,(c_num)
+	call copyln
+enter0:	ld hl,(worksp)
+	ld bc,1
+enterl:	ld a,(hl)
+	cp 0dh
+	jr z,enter1
+	ld a,(ofd)
+	push hl
+	rst 8
+	defb fwrite
+	pop hl
+enterl1:inc hl
+	jr nc,enterl
+	ret
+
+terminator: equ $ + 1
+enter1:	ld a,0dh
+	or a
+	jr z,enterc
+	push hl
+	ld hl,terminator
+	ld a,(ofd)
+	rst 8
+	defb fwrite
+	pop hl
+	ret c
+	bit 1,(iy+mode-err_nr)
+	res 1,(iy+mode-err_nr)
+	jr nz,enterl1
+
+newfile:equ $ + 1
+	ld a,0
+	or a
+	jr z,enterc
+	ld hl,(c_num)
+	ld bc,(e_num)
+	sbc hl,bc
+	jr nz,fcopyl
+	inc l
+	inc l
+	call seekln
+fcopyl:	ld hl,arg_e
+	ld bc,1000h
+	ld a,(fd)
+	push hl
+	push bc
+	rst 8
+	defb fread
+	pop de
+	pop hl
+	ld a,(ofd)
+	push de
+	rst 8
+	defb fwrite
+	pop de
+	ret c
+	ld a,b
+	cp d
+	jr z,fcopyl
+
+enterc:	ld a,(fd)
+	rst 8
+	defb fclose
+enterce:ld a,(ofd)
+	rst 8
+	defb fclose
+	ld a,"*"
+	ld hl,f_name
+	push hl
+	rst 8
+	defb funlink
+	ld a,"*"
+	ld hl,tmpname
+	pop de
+	rst 8
+	defb frename
+	ret c
+	ld hl,(c_num)
+	inc hl
+	ld (c_num),hl
+	jp teloop
+
 ; seek line
-; In: line number
+; In: HL = line number
 ; Out: ZF set if found
 ; Pollutes: everything
+; TODO: SLOW
 seekln:	ld bc,0001h
 seekd:	dec hl
 	ld a,h
@@ -171,6 +313,7 @@ fd:	equ $ + 1
 	pop hl
 	dec c
 	ret nz
+	inc c
 seekc:	equ $ + 1
 	ld a,0
 	cp 0dh		; cr
@@ -178,6 +321,39 @@ seekc:	equ $ + 1
 	cp 0ah		; lf
 	jr nz,seekl
 	jr seekd
+
+; copy lines
+; In: HL = line number
+; TODO: SLOW
+copyln:	ld bc,0001h
+copyd:	dec hl
+	ld a,h
+	or l
+	ret z
+copyl:	push hl
+	ld hl,copyc
+	ld a,(fd)
+	rst 8
+	defb fread
+	dec c
+	jr nz,copyr
+	inc c
+	dec hl
+ofd:	equ $ + 1
+	ld a,0
+	rst 8
+	defb fwrite
+	pop hl
+	ret c
+copyc:	equ $ + 1
+	ld a,0
+	cp 0dh		; cr
+	jr z,copyd
+	cp 0ah		; lf
+	jr nz,copyl
+	jr copyd
+copyr:	pop hl
+	ret
 
 ; print lines
 ; In: HL = number of lines to print, DE = pointer, BC = bytes till EOF
@@ -232,8 +408,6 @@ inv0:	ld a,14h
 	include "lib/println.asm"
 	include	"lib/puts.asm"
 
-usaget:	defb "Usage: te filename", 0dh, 00h
-
 crudg:	defb 00000000b
 	defb 00000010b
 	defb 00010010b
@@ -254,6 +428,7 @@ lfudg:	defb 00000000b
 
 d_num:	defw 0001h
 c_num:	defw 0001h
-	defb 00h		; separator
+e_num:	defw 0000h
+usaget:	defb "Usage: te filename", 0dh, 00h
+tmpname:defb "/tmp/te.tmp", 00h
 f_name:	include "lib/align512.asm"
-

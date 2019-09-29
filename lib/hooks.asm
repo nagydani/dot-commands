@@ -14,4 +14,8 @@ fread:		equ 9dh
 
 fwrite:		equ 9eh
 
+fseek:		equ 9fh
+
+funlink:	equ 0adh
+
 frename:	equ 0b0h
