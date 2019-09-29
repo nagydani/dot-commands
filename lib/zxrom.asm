@@ -1,9 +1,19 @@
 ; ZX Spectrum ROM entry points
-numeric:	equ 2d1bh
+cls:		equ 0d6bh
+cls_lower:	equ 0d6eh
+add_char:	equ 0f81h
+ed_keys:	equ 0f92h
+clear_sp:	equ 1097h
+wait_key:	equ 15d4h
+wait_key1:	equ 15deh
 chan_open:	equ 1601h
 make_room:	equ 1655h
+set_work:	equ 16bfh
 close0a:	equ 16e8h
 close0:		equ 16ebh
 str_data0:	equ 1721h
 report_o_2:	equ 1725h
 reclaim2:	equ 19e8h
+numeric:	equ 2d1bh
+stack_bc:	equ 2d2bh
+print_fp:	equ 2de3h

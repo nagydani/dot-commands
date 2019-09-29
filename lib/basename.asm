@@ -3,7 +3,7 @@
 ; Out: HL = pointer to file name, A = 0 if no path, "/" otherwise
 basename:
 	ld bc,00080h
-	xor a
+bname:	xor a
 	cpir
 	dec hl
 bnamel:	dec hl
