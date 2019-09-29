@@ -11,14 +11,6 @@ execute:ld de,f_name
 	call strarg
 	jr nz,usage
 
-	ld a,"*"
-	ld b,fopen_r
-	ld hl,f_name
-	rst 8
-	defb fopen
-	ret c
-	ld (fd),a
-
 	rst 18h
 	defw set_work
 	ld hl,flagx
@@ -30,6 +22,16 @@ execute:ld de,f_name
 	defw 0030h
 	ld (hl),0dh
 	ld (k_cur),hl
+
+	ld a,"*"
+	ld b,fopen_r
+	ld hl,f_name
+	rst 8
+	defb fopen
+	ld bc,0000h
+	ld de,0001h
+	jr c,redraw
+	ld (fd),a
 
 	ld hl,(d_num)
 	ld a,h
