@@ -96,11 +96,8 @@ donescr:res 4,(iy+tv_flag-err_nr)
 
 keyloop:rst 18h
 	defw wait_key
-	ex af,af'
-	rst 18h
-	defw break_key
-	ret nc
-	ex af,af'
+	cp " "
+	jr z,space
 	cp 18h
 	jr nc,insert
 	cp 07h
@@ -120,7 +117,7 @@ edkeys:	rst 18h
 
 edit:	rst 18h
 	defw clear_sp
-	ld a,0ffh
+edit2:	ld a,0ffh
 	rst 18h
 	defw chan_open
 c_ptr:	equ $ + 1
@@ -148,8 +145,17 @@ up:	ld hl,(k_cur)
 	ld (k_cur),de
 	jr keyloop
 
+space:	rst 18h
+	defw caps_shift
+	ret nc
+	call symbol_shift
+	ld a," "
+	jr z,insert
+	jr edit2
+
 insert:	rst 18h
 	defw add_char
+keyloop2:
 	jr keyloop
 
 down:	ld hl,(k_cur)
@@ -160,7 +166,7 @@ down:	ld hl,(k_cur)
 	cpir
 	dec hl
 	ld (k_cur),hl
-	jr keyloop
+	jr keyloop2
 
 movedown:
 	ld hl,(c_num)
@@ -191,11 +197,28 @@ fwdel:	rst 18h
 	ld (k_cur),hl
 	jp keyloop
 
-enter:	bit 1,(iy+mode-err_nr)
+enter:	ld hl,terminator
+	rst 18h
+	defw caps_shift
+	jr c,enter3
+	ld (hl),0
+	jr enter2		; join
+
+enter3:	call symbol_shift
+	jr z,enter4
+	ld a,(hl)
+	or a
+	jr nz,enterx
+	ld a,0ah
+enterx:	xor 7
+	ld (hl),a		; switch
+
+enter4:	bit 1,(iy+mode-err_nr)
 	jr z,enter2
 	ld a,0dh
 	rst 18h
-	defw add_char
+	defw add_char		; split
+
 enter2:	ld hl,tmpname
 	ld a,"*"
 	ld b,fopen_w
@@ -402,6 +425,13 @@ inv0:	ld a,14h
 	rst 10h
 	xor a
 	rst 10h
+	ret
+
+symbol_shift:
+	ld a,7fh
+	in a,(0feh)
+	or 0fdh
+	inc a
 	ret
 
 	include "lib/strarg.asm"
