@@ -11,6 +11,9 @@ execute:ld de,f_name
 	call strarg
 	jr nz,usage
 
+	rst 18h
+	defw cls
+
 teloop:	rst 18h
 	defw set_work
 	ld hl,flagx
@@ -24,6 +27,9 @@ teloop:	rst 18h
 	ld (k_cur),hl
 	ld hl,0
 	ld (e_num),hl
+	ld hl,0ffech
+	add hl,sp
+	ld (list_sp),hl
 
 	ld a,"*"
 	ld b,fopen_r
@@ -41,7 +47,7 @@ teloop:	rst 18h
 	ld a,h
 	or l
 	jr z,line0
-	push hl
+telp1:	push hl
 	call seekln
 	ld bc,1000h
 	ld hl,arg_e
@@ -59,6 +65,7 @@ redraw:	ld a,0feh
 	pop de
 	pop bc
 	set 4,(iy+tv_flag-err_nr)
+	ld (iy+breg-err_nr),0
 	ld a,16h
 	rst 10h
 	xor a
@@ -67,10 +74,27 @@ redraw:	ld a,0feh
 	ld hl,(c_num)
 	and a
 	sbc hl,de
-	ld de,arg_e
+	jr nc,curvis
+	add hl,de	; restore c_num
+	ld (d_num),hl
+	push hl
+	call seek0
+	pop hl
+	jr telp1
+
+curvis:	ld de,arg_e
 	call lines
 	jr nc,moveup
-	ld a,14h
+	bit 4,(iy+tv_flag-err_nr)
+	jr nz,inscr
+	; TODO: SLOW
+scrdown:call seek0
+	ld hl,(d_num)
+	inc hl
+	ld (d_num),hl
+	jr telp1
+
+inscr:	ld a,14h
 	rst 10h
 	ld a,1
 	rst 10h
@@ -79,6 +103,8 @@ redraw:	ld a,0feh
 	ld (c_len),bc
 	call lines
 	jr nc,donescr
+	bit 4, (iy+tv_flag-err_nr)
+	jr z,scrdown
 line0:	ld hl,(s_posn+1)
 	ld h,0
 	call lines
@@ -115,6 +141,13 @@ edkeys:	rst 18h
 	defw ed_keys
 	jr keyloop
 
+moveup:	ld hl,(c_num)
+	dec hl
+	ld a,h
+	or l
+	jr z,keyloop
+	jr vert
+
 edit:	rst 18h
 	defw clear_sp
 edit2:	ld a,0ffh
@@ -129,13 +162,6 @@ c_len:	equ $ + 1
 	ld hl,(c_num)
 	ld (e_num),hl
 	jr redraw2
-
-moveup:	ld hl,(c_num)
-	dec hl
-	ld a,h
-	or l
-	jr z,keyloop
-	jr vert
 
 up:	ld hl,(k_cur)
 	ld de,(worksp)
@@ -227,13 +253,7 @@ enter2:	ld hl,tmpname
 	ret c
 	ld (ofd),a
 
-	ld a,(fd)
-	ld bc,0
-	ld e,c
-	ld d,c
-	ld l,c
-	rst 8
-	defw fseek
+	call seek0
 	ld hl,(c_num)
 	call copyln
 enter0:	ld hl,(worksp)
@@ -250,10 +270,19 @@ enterl1:inc hl
 	jr nc,enterl
 	ret
 
+seek0:	ld a,(fd)
+	ld bc,0
+	ld e,c
+	ld d,c
+	ld l,c
+	rst 8
+	defw fseek
+	ret
+
 terminator: equ $ + 1
 enter1:	ld a,0dh
 	or a
-	jr z,enterc
+	jr z,entersk
 	push hl
 	ld hl,terminator
 	ld a,(ofd)
@@ -261,7 +290,7 @@ enter1:	ld a,0dh
 	defb fwrite
 	pop hl
 	ret c
-	bit 1,(iy+mode-err_nr)
+entersk:bit 1,(iy+mode-err_nr)
 	res 1,(iy+mode-err_nr)
 	jr nz,enterl1
 
@@ -400,7 +429,7 @@ line_e:	push hl
 	push hl
 	exx
 	ld hl,crudg
-	ld de,membot + 5
+	ld de,membot + 9
 	ld (udg),de
 	ld bc,10h
 	ldir
