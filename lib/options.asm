@@ -15,7 +15,7 @@ nextop:	inc	hl
 	add	hl,bc
 	call	jphl
 	ex	de,hl
-	jr	nextopt
+	jr	nextop
 
 endopt:	ex	de,hl
 	inc	hl
