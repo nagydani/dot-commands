@@ -335,8 +335,7 @@ trantab:incbin "sc2.tab"
 
 f_name:	include "lib/align512.asm"
 bitmap:	equ $
-
-chars0:	equ 5800h
-chars1:	equ 5900h
-chars2:	equ 5a00h
+chars0:	equ bitmap + 0800h
+chars1:	equ chars0 + 0100h
+chars2:	equ chars1 + 0100h
 
