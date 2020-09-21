@@ -1,4 +1,5 @@
-linepr:	rst 10h
+linepr:	set 2,(iy+30h)	; inside quotes
+	rst 10h
 ; Print a line without terminating CR or LF
 ; In: DE = line pointer, BC = maximum length
 ; Out: CF set if terminated, A = terminator, BC = remaining length, DE = points AFTER terminator

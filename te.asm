@@ -18,8 +18,8 @@ teloop:	rst 18h
 	defw set_work
 	ld hl,flagx
 	res 6,(hl)
-	set 7,(hl)
-	set 5,(hl)
+	set 7,(hl)		; INPUT LINE
+	set 5,(hl)		; INPUT
 	ld bc,0001h
 	rst 18h
 	defw 0030h
