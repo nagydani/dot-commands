@@ -93,20 +93,22 @@ write_a:ld bc,1
 	pop de
 	ret
 
-token:	cp tk_line
+token:	cp tk_rnd
+	jr c,t_sp
+	cp tk_line
 	jr c,t_nosp
-	bit 0,(iy+flags-err_nr)
+t_sp:	bit 0,(iy+flags-err_nr)
 	jr nz,t_nosp
 	push af
 	ld a, " "
 	call write_a
 	pop af
 t_nosp:	push af
-	sub a,tk_rnd
+	sub a,tk_spectrum
 	ld l,a
 	ld h,0
 	add hl,hl
-	ld de,tokens
+	ld de,tokens128
 	add hl,de
 	ld a,(hl)
 	inc hl
@@ -122,9 +124,11 @@ t_nosp:	push af
 	ld c,(hl)
 	pop af
 	pop hl
+	cp tk_rnd
+	jr c,t_sp2
 	cp tk_fn
 	ret c
-	ld a,c
+t_sp2:	ld a,c
 	cp "A"
 	ret c
 	ld a," "
@@ -141,7 +145,11 @@ nospc:	ld hl,flags2
 	jr nz, noquot
 noquot:	bit 2,(hl)
 	jr nz,quoted
-	cp tk_rnd
+	bit 4,(iy+flags-err_nr)
+	ld c,tk_rnd
+	jr z,t48
+	ld c,tk_spectrum
+t48:	cp c
 	jr nc,token
 quoted:	call write_a
 	pop hl
