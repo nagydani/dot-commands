@@ -1,3 +1,5 @@
+tokens128:
+	defw t_spectrum,t_play
 tokens:	defw t_rnd,t_inkeys,t_pi
 	defw t_fn,t_point,t_screens,t_attr,t_at,t_tab,t_vals,t_code
 	defw t_val,t_len,t_sin,t_cos,t_tan,t_asn,t_acs,t_atn
@@ -11,6 +13,8 @@ tokens:	defw t_rnd,t_inkeys,t_pi
 	defw t_list,t_let,t_pause,t_next,t_poke,t_print,t_plot,t_run
 	defw t_save,t_randomize,t_if,t_cls,t_draw,t_clear,t_return,t_copy
 
+t_spectrum:defb 8,"SPECTRUM"
+t_play:	defb 4,"PLAY"
 t_rnd:	defb 3,"RND"
 t_inkeys:defb 6,"INKEY$"
 t_pi:	defb 2,"PI"
@@ -57,8 +61,8 @@ t_cat:	defb 3,"CAT"
 t_format:defb 6,"FORMAT"
 t_move:	defb 4,"MOVE"
 t_erase:defb 5,"ERASE"
-t_open:	defb 5,"OPEN #"
-t_close:defb 6,"CLOSE #"
+t_open:	defb 6,"OPEN #"
+t_close:defb 7,"CLOSE #"
 t_merge:defb 5,"MERGE"
 t_verify:defb 6,"VERIFY"
 t_beep:	defb 4,"BEEP"
@@ -103,6 +107,8 @@ t_clear:defb 5,"CLEAR"
 t_return:defb 6,"RETURN"
 t_copy:	defb 4,"COPY"
 
+tk_spectrum:equ $a3
+tk_play:equ $a4
 tk_rnd:	equ $a5
 tk_inkeys:equ $a6
 tk_pi:	equ $a7
